@@ -6,24 +6,20 @@ export default {
     if (url.pathname === '/google917fded4ea1463df.html') {
       return new Response('google-site-verification: google917fded4ea1463df.html', {
         status: 200,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
     }
 
-    // 2. Отдаем robots.txt, который разрешает всё
+    // 2. Отдаем robots.txt
     if (url.pathname === '/robots.txt') {
       return new Response('User-agent: *\nAllow: /\n', {
         status: 200,
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-        },
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       });
     }
 
-    // 3. Если это не служебные файлы, работаем как прокси
-    let targetHostAndPath = url.pathname.substring(1); // убираем первый слэш
+    // 3. Проксирование
+    let targetHostAndPath = url.pathname.substring(1);
 
     if (!targetHostAndPath) {
       return new Response('Использование: https://ваш-домен.workers.dev/example.com/path', {
@@ -32,14 +28,12 @@ export default {
       });
     }
 
-    // Убираем протоколы, если пользователь их ввел
     if (targetHostAndPath.startsWith('https://')) {
       targetHostAndPath = targetHostAndPath.substring(8);
     } else if (targetHostAndPath.startsWith('http://')) {
       targetHostAndPath = targetHostAndPath.substring(7);
     }
 
-    // Принудительно добавляем https://
     const targetUrl = 'https://' + targetHostAndPath;
 
     try {
@@ -51,6 +45,11 @@ export default {
       newHeaders.set('Accept-Language', 'en-US,en;q=0.9');
       newHeaders.set('Accept-Encoding', 'gzip, deflate, br');
       newHeaders.set('Connection', 'keep-alive');
+      
+      // 👇 ДОБАВЛЕННЫЕ ЗАГОЛОВКИ ДЛЯ МАСКИРОВКИ
+      newHeaders.set('Referer', 'https://www.google.com/'); 
+      // Некоторые системы проверяют этот заголовок, чтобы понять, что запрос пришел с "правильного" хоста
+      newHeaders.set('X-Forwarded-Host', 'www.google.com'); 
 
       // Делаем запрос
       const response = await fetch(targetUrl, {
