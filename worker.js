@@ -2,7 +2,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
-    // 1. Проверяем, не запрашивает ли Google файл верификации
+    // 1. Отдаем файл верификации Google
     if (url.pathname === '/google917fded4ea1463df.html') {
       return new Response('google-site-verification: google917fded4ea1463df.html', {
         status: 200,
@@ -12,7 +12,17 @@ export default {
       });
     }
 
-    // 2. Если это не файл верификации, работаем как прокси
+    // 2. Отдаем robots.txt, который разрешает всё
+    if (url.pathname === '/robots.txt') {
+      return new Response('User-agent: *\nAllow: /\n', {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+        },
+      });
+    }
+
+    // 3. Если это не служебные файлы, работаем как прокси
     let targetHostAndPath = url.pathname.substring(1); // убираем первый слэш
 
     if (!targetHostAndPath) {
