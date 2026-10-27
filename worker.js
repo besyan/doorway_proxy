@@ -2,7 +2,17 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
-    // 1. Получаем путь (например, "/2ip.ru")
+    // 1. Проверяем, не запрашивает ли Google файл верификации
+    if (url.pathname === '/google917fded4ea1463df.html') {
+      return new Response('google-site-verification: google917fded4ea1463df.html', {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+        },
+      });
+    }
+
+    // 2. Если это не файл верификации, работаем как прокси
     let targetHostAndPath = url.pathname.substring(1); // убираем первый слэш
 
     if (!targetHostAndPath) {
@@ -12,14 +22,14 @@ export default {
       });
     }
 
-    // 2. Если вдруг пользователь всё равно ввел "https://", убираем это, чтобы не было дубля
+    // Убираем протоколы, если пользователь их ввел
     if (targetHostAndPath.startsWith('https://')) {
       targetHostAndPath = targetHostAndPath.substring(8);
     } else if (targetHostAndPath.startsWith('http://')) {
       targetHostAndPath = targetHostAndPath.substring(7);
     }
 
-    // 3. Принудительно добавляем https:// для запроса к целевому сайту
+    // Принудительно добавляем https://
     const targetUrl = 'https://' + targetHostAndPath;
 
     try {
@@ -32,7 +42,7 @@ export default {
       newHeaders.set('Accept-Encoding', 'gzip, deflate, br');
       newHeaders.set('Connection', 'keep-alive');
 
-      // Делаем запрос с автоматическим следованием редиректам
+      // Делаем запрос
       const response = await fetch(targetUrl, {
         method: 'GET',
         headers: newHeaders,
